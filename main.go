@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/tfriedel6/canvas"
 	"github.com/tfriedel6/canvas/sdlcanvas"
 )
@@ -15,6 +17,13 @@ func main() {
 	newControls()
 	GetControls().Bind(wnd)
 	loadTextures(drawingCanvas)
+
+	go (func() {
+		for {
+			println(int(wnd.FPS()))
+			time.Sleep(time.Second)
+		}
+	})()
 
 	displayCanvas := canvas.New(wnd.Backend)
 

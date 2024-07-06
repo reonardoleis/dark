@@ -105,7 +105,7 @@ func (r Raycaster) processWorker(in chan processWorkerIn, out chan processWorker
 				ray.side = 1
 			}
 
-			if dungeon.At(mapX, mapY) != nil {
+			if dungeon.At(mapX, mapY) != nil && dungeon.At(mapX, mapY).isWall() {
 				ray.hit = true
 				ray.entity = dungeon.At(mapX, mapY)
 			}

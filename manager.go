@@ -22,19 +22,28 @@ type Manager struct {
 }
 
 func newManager(canvas, displayCanvas *canvas.Canvas) *Manager {
-	initialPos := newVector2(22, 22)
 
 	cameraPlane := newVector2(0, 0.66)
 	cameraDirection := newVector2(-1, 0)
 	camera := newCamera(cameraPlane, cameraDirection)
 
-	player := newPlayer(initialPos, camera)
-
 	dungeon := newDungeon(mapWidth, mapHeight)
-	dungeon.generate(generateSimpleLevel)
+	dungeon.generate(generateLevel)
 
 	renderer3d := newRenderer3D(canvas, newRaycaster())
 	renderer2d := newRenderer2D(canvas)
+
+	emptyPosition := [2]int{0, 0}
+	for y := range dungeon.grid {
+		for x := range dungeon.grid[y] {
+			if dungeon.At(x, y) != nil && dungeon.At(x, y).isFloor() {
+				emptyPosition = [2]int{y, x}
+				break
+			}
+		}
+	}
+
+	player := newPlayer(newVector2(float64(emptyPosition[1]), float64(emptyPosition[0])), camera)
 
 	return &Manager{
 		currentFrameTime: 0,
@@ -56,9 +65,9 @@ func (m *Manager) loop() {
 
 	m.canvas.ClearRect(0, 0, screenWidth, screenHeight)
 	m.displayCanvas.ClearRect(0, 0, 1280, 720)
-	m.renderer3d.RenderFloor(m.player, m.player.camera)
+	m.renderer3d.RenderFloorAndRoof(m.dungeon, m.player, m.player.camera)
 	m.renderer3d.RenderWalls(m.player, m.player.camera, m.dungeon)
-	//m.renderer2d.RenderMap(m.player, m.dungeon)
+	//	m.renderer2d.RenderMap(m.player, m.dungeon)
 	m.renderer3d.RenderPlayer(m.player)
 	m.player.Controls(m.dungeon, 1.0)
 	m.canvas.SetFont(nil, 25)

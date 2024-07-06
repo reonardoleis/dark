@@ -13,10 +13,14 @@ func newRenderer2D(canvas *canvas.Canvas) *Renderer2D {
 }
 
 func (r *Renderer2D) RenderMap(player *Player, dungeon *Dungeon) {
-	r.canvas.SetFillStyle(255, 0, 0)
 	for y := 0; y < len(dungeon.grid); y++ {
 		for x := 0; x < len(dungeon.grid[y]); x++ {
 			if dungeon.grid[y][x] != nil {
+				if dungeon.grid[y][x].isWall() {
+					r.canvas.SetFillStyle(255, 0, 0)
+				} else {
+					r.canvas.SetFillStyle(0, 0, 255)
+				}
 				r.canvas.FillRect(float64(x)*cellScaleX, float64(y)*cellScaleY, cellScaleX, cellScaleY)
 			}
 		}

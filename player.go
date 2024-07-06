@@ -14,30 +14,30 @@ func newPlayer(position Vector2, camera *Camera) *Player {
 		position:      position,
 		camera:        camera,
 		moveSpeed:     3.0,
-		rotationSpeed: 1.25,
+		rotationSpeed: 2.25,
 	}
 }
 
 func (p *Player) Controls(dungeon *Dungeon, deltaTime float64) {
 	if GetControls().IsKeyDown(KeyW) {
-		empty := dungeon.grid[int(p.position.y)][int(p.position.x+p.camera.direction.x*p.moveSpeed*DELTA_TIME)] == nil
+		empty := dungeon.grid[int(p.position.y)][int(p.position.x+p.camera.direction.x*p.moveSpeed*DELTA_TIME)].isFloor()
 		if empty {
 			p.position.x += p.camera.direction.x * p.moveSpeed * DELTA_TIME
 		}
 
-		empty = dungeon.grid[int(p.position.y+p.camera.direction.y*p.moveSpeed*DELTA_TIME)][int(p.position.x)] == nil
+		empty = dungeon.grid[int(p.position.y+p.camera.direction.y*p.moveSpeed*DELTA_TIME)][int(p.position.x)].isFloor()
 		if empty {
 			p.position.y += p.camera.direction.y * p.moveSpeed * DELTA_TIME
 		}
 	}
 
 	if GetControls().IsKeyDown(KeyS) {
-		empty := dungeon.grid[int(p.position.y)][int(p.position.x-p.camera.direction.x*p.moveSpeed*DELTA_TIME)] == nil
+		empty := dungeon.grid[int(p.position.y)][int(p.position.x-p.camera.direction.x*p.moveSpeed*DELTA_TIME)].isFloor()
 		if empty {
 			p.position.x -= p.camera.direction.x * p.moveSpeed * DELTA_TIME
 		}
 
-		empty = dungeon.grid[int(p.position.y-p.camera.direction.y*p.moveSpeed*DELTA_TIME)][int(p.position.x)] == nil
+		empty = dungeon.grid[int(p.position.y-p.camera.direction.y*p.moveSpeed*DELTA_TIME)][int(p.position.x)].isFloor()
 		if empty {
 			p.position.y -= p.camera.direction.y * p.moveSpeed * DELTA_TIME
 		}
