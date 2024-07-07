@@ -132,6 +132,7 @@ func generateLevel(grid [][]*Entity) {
 					sizeX := rand.Intn(maxRoomSize-minRoomSize) + minRoomSize
 					sizeY := rand.Intn(maxRoomSize-minRoomSize) + minRoomSize
 
+					pp := make(map[int]bool)
 					for oy := 0; oy < sizeY; oy++ {
 						for ox := 0; ox < sizeX; ox++ {
 							if tempGrid[y+oy][x+ox] == 4 {
@@ -139,11 +140,29 @@ func generateLevel(grid [][]*Entity) {
 							}
 							tempGrid[y+oy][x+ox] = 2
 							if oy == 0 || oy == sizeY-1 || ox == 0 || ox == sizeX-1 {
-								if tempGrid[y+oy][x+ox] == 0 {
-									tempGrid[y+oy][x+ox] = 3
+								tempGrid[y+oy][x+ox] = 3
 
-								} else {
-									tempGrid[y+oy][x+ox] = 2
+								if ox-1 >= 1 && tempGrid[y+oy][x+ox-1] == 0 && !pp[0] && !(ox == 0 && oy == 0) && !(ox == sizeX-1 && oy == sizeY-1) {
+									println(1)
+									tempGrid[y+oy][x+ox] = 4
+									_ = pp
+									pp[0] = true
+								}
+								if oy-1 >= 1 && tempGrid[y+oy-1][x+ox] == 0 && !pp[1] && !(ox == 0 && oy == 0) && (ox == sizeX-1 && oy == sizeY-1) {
+									println(2)
+									tempGrid[y+oy][x+ox] = 4
+									pp[1] = true
+								}
+								if ox+1 < len(tempGrid[0])-2 && tempGrid[y+oy][x+ox+1] == 0 && !pp[2] && !(ox == 0 && oy == 0) && !(ox == sizeX-1 && oy == sizeY-1) {
+									println(3)
+									tempGrid[y+oy][x+ox] = 4
+									pp[2] = true
+								}
+								if oy+1 < len(tempGrid)-2 && tempGrid[y+oy+1][ox] == 0 && !pp[3] && !(ox == 0 && oy == 0) && !(ox == sizeX-1 && oy == sizeY-1) {
+									println(4)
+									tempGrid[y+oy][x+ox] = 4
+									_ = pp
+									pp[3] = true
 								}
 							}
 
@@ -197,7 +216,7 @@ func generateLevel(grid [][]*Entity) {
 			} else if tempGrid[y][x] == 2 {
 				grid[y][x] = newEntity(Bookshelf, Bookshelf, FloorCeiling, newVector2(float64(x), float64(y)))
 			} else if tempGrid[y][x] == 4 {
-				grid[y][x] = newEntity(Bookshelf, Bookshelf, Wall, newVector2(float64(x), float64(y)))
+				grid[y][x] = newEntity(Bookshelf, Bookshelf, FloorCeiling, newVector2(float64(x), float64(y)))
 			} else {
 				grid[y][x] = newEntity(Bookshelf, Bookshelf, Wall, newVector2(float64(x), float64(y)))
 			}

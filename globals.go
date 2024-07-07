@@ -7,7 +7,7 @@ const (
 	screenHeight    = 360
 	cellScaleX      = 5.0
 	cellScaleY      = 5.0
-	darkenScale     = 7.0
+	darkenScale     = 20.0
 	maxRoomSize     = 8
 	minRoomSize     = 5
 	roomThreshold   = 20

@@ -67,7 +67,7 @@ func (m *Manager) loop() {
 	m.displayCanvas.ClearRect(0, 0, 1280, 720)
 	m.renderer3d.RenderFloorAndRoof(m.dungeon, m.player, m.player.camera)
 	m.renderer3d.RenderWalls(m.player, m.player.camera, m.dungeon)
-	//	m.renderer2d.RenderMap(m.player, m.dungeon)
+	m.renderer2d.RenderMap(m.player, m.dungeon)
 	m.renderer3d.RenderPlayer(m.player)
 	m.player.Controls(m.dungeon, 1.0)
 	m.canvas.SetFont(nil, 25)
