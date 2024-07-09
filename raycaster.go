@@ -5,6 +5,10 @@ import (
 	"sort"
 )
 
+var (
+	zBuffer = make([]float64, screenWidth)
+)
+
 type Raycaster struct{}
 
 type Ray struct {
@@ -117,6 +121,7 @@ func (r Raycaster) processWorker(in chan processWorkerIn, out chan processWorker
 			ray.perpendicularWallDistace = sideDistanceY - ray.deltaDistance.y
 		}
 
+		zBuffer[x] = ray.perpendicularWallDistace
 		hitX := player.position.x + (sideDistanceX-ray.deltaDistance.x)*ray.direction.x
 		hitY := player.position.y + (sideDistanceY-ray.deltaDistance.y)*ray.direction.y
 		ray.euclideanDistance = euclideanDistance(player.position.x, player.position.y, hitX, hitY)

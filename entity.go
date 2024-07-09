@@ -2,40 +2,9 @@ package main
 
 import (
 	"image"
+	"math/rand"
 
 	"github.com/tfriedel6/canvas"
-)
-
-type TextureId int
-
-const (
-	Bricks1 = iota
-	Enemy
-	Chest
-	Door
-	Lever
-	Bookshelf
-	Snowbricks
-	Floorbrick
-	Hexblue
-	Sword
-	Dirtmud
-	Bricks1Window1
-	Bricks1Window2
-	Stonefloor1
-	Ground1_0
-	Ground1_1
-	Ground2_0
-	Ground2_1
-	Ground3_0
-	Ground3_1
-	Wall1_0
-	Wall1_1
-	Wall2_0
-	Wall2_1
-	Wall2_2
-	Wall3_0
-	Wall3_1
 )
 
 type TextureVariations struct {
@@ -51,6 +20,9 @@ var (
 		Ground1_0: {[]TextureId{Ground1_1}, 50},
 		Ground2_0: {[]TextureId{Ground2_1}, 98},
 		Ground3_0: {[]TextureId{Ground3_1}, 80},
+		Wall5_0:   {[]TextureId{Wall5_1}, 70},
+		Wall7_0:   {[]TextureId{Wall7_1}, 95},
+		Wall8_0:   {[]TextureId{Wall8_1}, 92},
 	}
 )
 
@@ -66,14 +38,20 @@ type Entity struct {
 	texture1 TextureId
 	texture2 TextureId
 	position Vector2
+	debugId  int
+	isRoom   bool
+	isSafe   bool
 }
 
-func newEntity(texture1, texture2 TextureId, t EntityType, p Vector2) *Entity {
+func newEntity(texture1, texture2 TextureId, t EntityType, p Vector2, isRoom, isSafe bool, debugId int) *Entity {
 	return &Entity{
 		t:        t,
 		texture1: texture1,
 		texture2: texture2,
 		position: p,
+		isRoom:   isRoom,
+		isSafe:   isSafe,
+		debugId:  debugId,
 	}
 }
 
@@ -99,4 +77,19 @@ func (t TextureId) HasVariations() bool {
 
 func (t TextureId) Variations() TextureVariations {
 	return varies[t]
+}
+
+func (t TextureId) GetRandomVariation() TextureId {
+	if !t.HasVariations() {
+		return t
+	}
+
+	variations := t.Variations()
+	variate := rand.Intn(101) >= variations.variationThreshold
+
+	if !variate {
+		return t
+	}
+
+	return variations.variations[rand.Intn(len(variations.variations))]
 }

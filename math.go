@@ -13,3 +13,12 @@ func perpendicularToEuclidean(perpendicularDistance float64, playerPosition Vect
 
 	return euclideanDistance
 }
+
+func clamp(val, min, max int) int {
+	if val < min {
+		return min
+	} else if val > max {
+		return max
+	}
+	return val
+}

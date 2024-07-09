@@ -15,6 +15,11 @@ const (
 	RIGHT  = 3
 )
 
+func isRoomCorner(ox, oy, sizeX, sizeY int) bool {
+	return (ox == 0 && oy == 0) || (ox == sizeX-1 && oy == sizeY-1) ||
+		(ox == 0 && oy == sizeY-1) || (ox == sizeX-1 && oy == 0)
+}
+
 func generateLevel(grid [][]*Entity) {
 	tempGrid := make([][]int, len(grid))
 	for y := 0; y < len(tempGrid); y++ {
@@ -91,14 +96,16 @@ func generateLevel(grid [][]*Entity) {
 				dirX = -1
 			}
 
-			currentY += dirY
-			currentX += dirX
 			switch startSide {
 			case TOP, BOTTOM:
 				tempGrid[currentY+dirY][currentX] = 1
 			case LEFT, RIGHT:
 				tempGrid[currentY][currentX+dirX] = 1
 			}
+			currentY += dirY
+
+			currentX += dirX
+
 			counter++
 		}
 
@@ -106,6 +113,18 @@ func generateLevel(grid [][]*Entity) {
 	}
 
 	rooms := [][2]int{}
+
+	type roomData struct {
+		floorTexture   TextureId
+		ceilingTexture TextureId
+		wallTexture    TextureId
+	}
+
+	roomsData := make([][]roomData, len(tempGrid))
+	for y := 0; y < len(roomsData); y++ {
+		roomsData[y] = make([]roomData, len(tempGrid[0]))
+	}
+
 	for y := maxRoomSize + 1; y < len(grid)-maxRoomSize-1; y++ {
 		for x := maxRoomSize + 1; x < len(grid[y])-maxRoomSize-1; x++ {
 			random := rand.Intn(101)
@@ -129,57 +148,80 @@ func generateLevel(grid [][]*Entity) {
 				}
 
 				if possible {
+					floorTextureId := roomFloorTextures[rand.Intn(len(roomFloorTextures))]
+					ceilingTextureId := roomCeilingTextures[rand.Intn(len(roomCeilingTextures))]
+					wallTextureId := roomWallTextures[rand.Intn(len(roomWallTextures))]
+
+					currentRoomData := roomData{
+						floorTexture:   floorTextureId,
+						ceilingTexture: ceilingTextureId,
+						wallTexture:    wallTextureId,
+					}
+
 					sizeX := rand.Intn(maxRoomSize-minRoomSize) + minRoomSize
 					sizeY := rand.Intn(maxRoomSize-minRoomSize) + minRoomSize
 
-					pp := make(map[int]bool)
+					openedSides := map[int]bool{}
 					for oy := 0; oy < sizeY; oy++ {
 						for ox := 0; ox < sizeX; ox++ {
-							if tempGrid[y+oy][x+ox] == 4 {
-								continue
-							}
-							tempGrid[y+oy][x+ox] = 2
-							if oy == 0 || oy == sizeY-1 || ox == 0 || ox == sizeX-1 {
-								tempGrid[y+oy][x+ox] = 3
+							tempGrid[y+oy][x+ox] = 4
+							roomsData[y+oy][x+ox] = currentRoomData
+							if ox == 0 || oy == 0 || ox == sizeX-1 || oy == sizeY-1 {
+								tempGrid[y+oy][x+ox] = 5
 
-								if ox-1 >= 1 && tempGrid[y+oy][x+ox-1] == 0 && !pp[0] && !(ox == 0 && oy == 0) && !(ox == sizeX-1 && oy == sizeY-1) {
-									println(1)
-									tempGrid[y+oy][x+ox] = 4
-									_ = pp
-									pp[0] = true
-								}
-								if oy-1 >= 1 && tempGrid[y+oy-1][x+ox] == 0 && !pp[1] && !(ox == 0 && oy == 0) && (ox == sizeX-1 && oy == sizeY-1) {
-									println(2)
-									tempGrid[y+oy][x+ox] = 4
-									pp[1] = true
-								}
-								if ox+1 < len(tempGrid[0])-2 && tempGrid[y+oy][x+ox+1] == 0 && !pp[2] && !(ox == 0 && oy == 0) && !(ox == sizeX-1 && oy == sizeY-1) {
-									println(3)
-									tempGrid[y+oy][x+ox] = 4
-									pp[2] = true
-								}
-								if oy+1 < len(tempGrid)-2 && tempGrid[y+oy+1][ox] == 0 && !pp[3] && !(ox == 0 && oy == 0) && !(ox == sizeX-1 && oy == sizeY-1) {
-									println(4)
-									tempGrid[y+oy][x+ox] = 4
-									_ = pp
-									pp[3] = true
+								if !isRoomCorner(ox, oy, sizeX, sizeY) {
+									if ox == 0 && !openedSides[0] && tempGrid[y+oy][x+ox-1] == 1 {
+										openedSides[0] = true
+										tempGrid[y+oy][x+ox] = 4
+									} else if ox == sizeX-1 && !openedSides[1] && tempGrid[y+oy][x+ox+1] == 1 {
+										openedSides[1] = true
+										tempGrid[y+oy][x+ox] = 4
+									} else if oy == 0 && !openedSides[2] && tempGrid[y+oy-1][x+ox] == 1 {
+										openedSides[2] = true
+										tempGrid[y+oy][x+ox] = 4
+									} else if oy == sizeY-1 && !openedSides[3] && tempGrid[y+oy+1][x+ox] == 1 {
+										openedSides[3] = true
+										tempGrid[y+oy][x+ox] = 4
+									}
 								}
 							}
 
 						}
 					}
 
-					rooms = append(rooms, [2]int{x, y})
-				}
-			}
-		}
-	}
+					for oy := 0; oy < sizeY; oy++ {
+						for ox := 0; ox < sizeX; ox++ {
 
-	for y := 1; y < len(grid)-1; y++ {
-		for x := 1; x < len(grid[y])-1; x++ {
-			if tempGrid[y][x] == 1 {
-				if tempGrid[y+1][x] == 0 && tempGrid[y][x+1] == 0 && tempGrid[y-1][x] == 0 && tempGrid[y][x-1] == 0 {
-					tempGrid[y][x] = 0
+							if isRoomCorner(ox, oy, sizeX, sizeY) {
+
+								if ox == 0 && !openedSides[0] && tempGrid[y+oy][x+ox-1] == 1 {
+									openedSides[0] = true
+									tempGrid[y+oy][x+ox] = 4
+									tempGrid[y+oy][x+ox-1] = 6
+									tempGrid[y+oy][x+ox+1] = 6
+								} else if ox == sizeX-1 && !openedSides[1] && tempGrid[y+oy][x+ox+1] == 1 {
+									openedSides[1] = true
+									tempGrid[y+oy][x+ox] = 4
+									tempGrid[y+oy][x+ox+1] = 6
+									tempGrid[y+oy][x+ox-1] = 6
+								} else if oy == 0 && !openedSides[2] && tempGrid[y+oy-1][x+ox] == 1 {
+									openedSides[2] = true
+									tempGrid[y+oy][x+ox] = 4
+									tempGrid[y+oy-1][x+ox] = 6
+									tempGrid[y+oy+1][x+ox] = 6
+								} else if oy == sizeY-1 && !openedSides[3] && tempGrid[y+oy+1][x+ox] == 1 {
+									openedSides[3] = true
+									tempGrid[y+oy][x+ox] = 4
+									tempGrid[y+oy+1][x+ox] = 6
+									tempGrid[y+oy-1][x+ox] = 6
+								}
+
+							}
+
+						}
+					}
+
+					rooms = append(rooms, [2]int{x, y})
 				}
 			}
 		}
@@ -194,31 +236,22 @@ func generateLevel(grid [][]*Entity) {
 			index2 := int(v1 * float64(len(ceilingTextures)))
 			index3 := int(v1 * float64(len(wallTextures)))
 
-			floorTexture := floorTextures[index1]
-			ceilingTexture := ceilingTextures[index2]
-			wallTexture := wallTextures[index3]
-
-			random := rand.Intn(101)
-			if wallTexture.HasVariations() {
-				variations := wallTexture.Variations()
-				if random >= variations.variationThreshold {
-					random = rand.Intn(len(variations.variations))
-					wallTexture = variations.variations[random]
-				}
-			}
+			floorTexture := floorTextures[index1].GetRandomVariation()
+			ceilingTexture := ceilingTextures[index2].GetRandomVariation()
+			wallTexture := wallTextures[index3].GetRandomVariation()
 
 			if y == 0 || y == len(grid)-1 || x == 0 || x == len(grid[y])-1 {
-				grid[y][x] = newEntity(wallTexture, wallTexture, Wall, newVector2(float64(x), float64(y)))
+				grid[y][x] = newEntity(wallTexture, wallTexture, Wall, newVector2(float64(x), float64(y)), false, false, tempGrid[y][x])
 			} else if tempGrid[y][x] == 0 {
-				grid[y][x] = newEntity(wallTexture, wallTexture, Wall, newVector2(float64(x), float64(y)))
+				grid[y][x] = newEntity(wallTexture, wallTexture, Wall, newVector2(float64(x), float64(y)), false, false, tempGrid[y][x])
 			} else if tempGrid[y][x] == 1 {
-				grid[y][x] = newEntity(floorTexture, ceilingTexture, FloorCeiling, newVector2(float64(x), float64(y)))
+				grid[y][x] = newEntity(floorTexture, ceilingTexture, FloorCeiling, newVector2(float64(x), float64(y)), false, false, tempGrid[y][x])
 			} else if tempGrid[y][x] == 2 {
-				grid[y][x] = newEntity(Bookshelf, Bookshelf, FloorCeiling, newVector2(float64(x), float64(y)))
-			} else if tempGrid[y][x] == 4 {
-				grid[y][x] = newEntity(Bookshelf, Bookshelf, FloorCeiling, newVector2(float64(x), float64(y)))
-			} else {
-				grid[y][x] = newEntity(Bookshelf, Bookshelf, Wall, newVector2(float64(x), float64(y)))
+				grid[y][x] = newEntity(Bookshelf, Bookshelf, FloorCeiling, newVector2(float64(x), float64(y)), false, false, tempGrid[y][x])
+			} else if tempGrid[y][x] == 4 || tempGrid[y][x] == 6 {
+				grid[y][x] = newEntity(roomsData[y][x].floorTexture.GetRandomVariation(), roomsData[y][x].ceilingTexture.GetRandomVariation(), FloorCeiling, newVector2(float64(x), float64(y)), true, false, tempGrid[y][x])
+			} else if tempGrid[y][x] == 5 {
+				grid[y][x] = newEntity(roomsData[y][x].wallTexture.GetRandomVariation(), roomsData[y][x].wallTexture.GetRandomVariation(), Wall, newVector2(float64(x), float64(y)), true, false, tempGrid[y][x])
 			}
 		}
 	}

@@ -12,6 +12,9 @@ type keysPressed = map[Key]bool
 type Controls struct {
 	keysDown    keysDown
 	keysPressed keysPressed
+	mouseDeltaX int
+	mouseDeltaY int
+	window      *sdlcanvas.Window
 }
 
 type Key string
@@ -29,13 +32,17 @@ const (
 	KeyJ         = "KeyJ"
 	KeyF         = "KeyF"
 	KeyR         = "KeyR"
+	KeyM1        = "KeyM1"
+	Key1         = "Digit1"
+	Key2         = "Digit2"
+	Key3         = "Digit3"
+	Key4         = "Digit4"
 )
 
 func newControls() {
 	keysDown := make(map[Key]bool)
 	keysPressed := make(map[Key]bool)
-
-	controls = &Controls{keysDown, keysPressed}
+	controls = &Controls{keysDown, keysPressed, 0, 0, nil}
 }
 
 func GetControls() *Controls {
@@ -45,6 +52,23 @@ func GetControls() *Controls {
 func (c *Controls) Bind(window *sdlcanvas.Window) {
 	window.KeyUp = c.handleKeyUp
 	window.KeyDown = c.handleKeyDown
+	window.MouseDown = c.handleMouseDown
+	window.MouseUp = c.handleMouseUp
+	window.MouseMove = c.handleMouseMove
+	c.window = window
+}
+
+func (c *Controls) handleMouseMove(x, y int) {
+	c.mouseDeltaX = x
+	c.mouseDeltaY = y
+}
+
+func (c *Controls) handleMouseDown(button int, x, y int) {
+	key := KeyM1
+	c.keysPressed[Key(key)] = true
+}
+
+func (c *Controls) handleMouseUp(button int, x, y int) {
 }
 
 func (c *Controls) handleKeyDown(scancode int, rn rune, name string) {

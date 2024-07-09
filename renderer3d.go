@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sort"
 
 	"github.com/tfriedel6/canvas"
 )
@@ -293,10 +294,16 @@ func (r Renderer3D) RenderFloorAndRoofSequential(player *Player, camera *Camera)
 func (r *Renderer3D) RenderPlayer(player *Player) {
 	texture := textures[Sword].image
 
+	r.canvas.Save()
+
+	r.canvas.Rotate(player.currentAttackStep)
+
 	r.canvas.DrawImage(
 		texture, 0.0, 0.0, float64(texture.Width()), float64(texture.Height()),
-		screenWidth-float64(texture.Width())*1.5, screenHeight/2, float64(texture.Width()), float64(texture.Height()),
+		screenWidth-float64(texture.Width())*4-(screenWidth*0.1), screenHeight/2, float64(texture.Width())*4, float64(texture.Height()*4),
 	)
+
+	r.canvas.Restore()
 }
 
 //  DrawImage("image", dx, dy)
@@ -304,3 +311,164 @@ func (r *Renderer3D) RenderPlayer(player *Player) {
 //  DrawImage("image", sx, sy, sw, sh, dx, dy, dw, dh)
 // Where dx/dy/dw/dh are the destination coordinates and sx/sy/sw/sh are the
 // source coordinates
+
+func (r *Renderer3D) RenderNpcs(player *Player, npcs []*NPC) {
+
+	darkenImage := image.NewRGBA(image.Rect(0, 0, screenWidth, screenHeight))
+	image := image.NewRGBA(image.Rect(0, 0, screenWidth, screenHeight))
+
+	for _, npc := range npcs {
+
+		npc.distance = ((player.position.x - npc.position.x) * (player.position.x - npc.position.x)) +
+			((player.position.y - npc.position.y) * (player.position.y - npc.position.y))
+
+	}
+
+	sort.SliceStable(npcs, func(i, j int) bool {
+		return npcs[i].distance > npcs[j].distance
+	})
+
+	for _, npc := range npcs {
+		spriteX := npc.position.x - player.position.x
+		spriteY := npc.position.y - player.position.y
+
+		invDet := 1.0 / (player.camera.plane.x*player.camera.direction.y - player.camera.plane.y*player.camera.direction.x)
+		transformX := invDet * (player.camera.direction.y*spriteX - player.camera.direction.x*spriteY)
+		transformY := invDet * (-player.camera.plane.y*spriteX + player.camera.plane.x*spriteY)
+
+		spriteScreenX := int((float64(screenWidth) / 2) * (1 + transformX/transformY))
+		tex := textures[npc.textureId]
+		texWidth := tex.rgba.Bounds().Dx()
+		texHeight := tex.rgba.Bounds().Dy()
+
+		vMoveScreen := int(float64(texHeight) / transformY)
+		spriteHeight := int(math.Abs(float64(screenHeight)/transformY)) * 2
+		drawStartY := -spriteHeight/2 + screenHeight/2 + vMoveScreen
+		if drawStartY < 0 {
+			drawStartY = 0
+		}
+		drawEndY := spriteHeight/2 + screenHeight/2 + vMoveScreen
+		if drawEndY >= screenHeight {
+			drawEndY = screenHeight - 1
+		}
+
+		spriteWidth := int(math.Abs(float64(screenHeight)/transformY)) * 2
+
+		drawStartX := -spriteWidth/2 + spriteScreenX
+		if drawStartX < 0 {
+			drawStartX = 0
+		}
+		drawEndX := spriteWidth/2 + spriteScreenX
+		if drawEndX >= screenWidth {
+			drawEndX = screenWidth - 1
+		}
+
+		for stripe := drawStartX; stripe < drawEndX; stripe++ {
+			texX := int(256*(stripe-(-spriteWidth/2+spriteScreenX))*texWidth/spriteWidth) / 256
+
+			if transformY > 0 && stripe > 0 && stripe < screenWidth && transformY < zBuffer[stripe] {
+				for y := drawStartY; y < drawEndY; y++ {
+					d := (y-vMoveScreen)*256 - screenHeight*128 + spriteHeight*128
+					texY := ((d * texHeight / spriteHeight) / 256)
+					c := tex.rgba.At(texX, texY)
+					percentage := float64(npc.distance) / 4 / darkenScale
+					darkenFactor := percentage
+					if percentage > 1 {
+						darkenFactor = 1.0
+					}
+
+					if r, g, b, a := c.RGBA(); r+g+b != 0 {
+						if npc.hitHighlightTimeleft > 0 {
+							r = 200
+						}
+						shade := 255 * darkenFactor
+						darkenImage.Set(stripe, y, color.RGBA{uint8(0), uint8(0), uint8(0), uint8(shade)})
+						color := color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: uint8(a)}
+						image.Set(stripe, y, color)
+					}
+				}
+			}
+		}
+	}
+
+	r.canvas.DrawImage(image)
+	r.canvas.DrawImage(darkenImage)
+}
+
+func (r *Renderer3D) RenderProps(player *Player, props []*Prop) {
+	image := image.NewRGBA(image.Rect(0, 0, screenWidth, screenHeight))
+
+	for _, prop := range props {
+
+		prop.distance = ((player.position.x - prop.position.x) * (player.position.x - prop.position.x)) +
+			((player.position.y - prop.position.y) * (player.position.y - prop.position.y))
+
+	}
+
+	sort.SliceStable(props, func(i, j int) bool {
+		return props[i].distance > props[j].distance
+	})
+
+	for _, prop := range props {
+		spriteX := prop.position.x - player.position.x
+		spriteY := prop.position.y - player.position.y
+
+		invDet := 1.0 / (player.camera.plane.x*player.camera.direction.y - player.camera.plane.y*player.camera.direction.x)
+		transformX := invDet * (player.camera.direction.y*spriteX - player.camera.direction.x*spriteY)
+		transformY := invDet * (-player.camera.plane.y*spriteX + player.camera.plane.x*spriteY)
+
+		spriteScreenX := int((float64(screenWidth) / 2) * (1 + transformX/transformY))
+		tex := textures[prop.textureId]
+		texWidth := tex.rgba.Bounds().Dx()
+		texHeight := tex.rgba.Bounds().Dy()
+
+		vMoveScreen := int(float64(texHeight) / transformY)
+		if prop.propPosition == PropPositionCeiling {
+			vMoveScreen = -vMoveScreen
+		}
+		spriteHeight := int(math.Abs(float64(screenHeight)/transformY)) / prop.divY
+		drawStartY := -spriteHeight/2 + screenHeight/2 + vMoveScreen
+		if drawStartY < 0 {
+			drawStartY = 0
+		}
+		drawEndY := spriteHeight/2 + screenHeight/2 + vMoveScreen
+		if drawEndY >= screenHeight {
+			drawEndY = screenHeight - 1
+		}
+
+		spriteWidth := int(math.Abs(float64(screenHeight)/transformY)) / prop.divX
+
+		drawStartX := -spriteWidth/2 + spriteScreenX
+		if drawStartX < 0 {
+			drawStartX = 0
+		}
+		drawEndX := spriteWidth/2 + spriteScreenX
+		if drawEndX >= screenWidth {
+			drawEndX = screenWidth - 1
+		}
+
+		for stripe := drawStartX; stripe < drawEndX; stripe++ {
+			texX := int(256*(stripe-(-spriteWidth/2+spriteScreenX))*texWidth/spriteWidth) / 256
+
+			if transformY > 0 && stripe > 0 && stripe < screenWidth && transformY < zBuffer[stripe] {
+				for y := drawStartY; y < drawEndY; y++ {
+					d := (y-vMoveScreen)*256 - screenHeight*128 + spriteHeight*128
+					texY := ((d * texHeight / spriteHeight) / 256)
+					c := tex.rgba.At(texX, texY)
+					percentage := float64(prop.distance) / darkenScale * 0.85
+					darkenFactor := percentage
+					if percentage > 1 {
+						darkenFactor = 1.0
+					}
+
+					if r, g, b, a := c.RGBA(); r+g+b != 0 {
+						color := color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: uint8(a - uint32(255*darkenFactor))}
+						image.Set(stripe, y, color)
+					}
+				}
+			}
+		}
+	}
+
+	r.canvas.DrawImage(image)
+}
