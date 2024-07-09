@@ -17,6 +17,7 @@ type Player struct {
 	stats                 *Stats
 	currentEnemyNpcTarget *NPC
 	attributes            *Attributes
+	powerups              *Powerups
 	alive                 bool
 	points                int
 	enemiesKilled         int
@@ -33,6 +34,7 @@ func newPlayer(position Vector2, camera *Camera) *Player {
 		stats:          newStats(),
 		attributes:     newAttributes(5, 5, 5, 5),
 		alive:          true,
+		powerups:       newPowerups(),
 	}
 
 	go playFootsteps(player)
@@ -57,6 +59,8 @@ func (p *Player) Controls(dungeon *Dungeon, deltaTime float64) {
 		p.isWalking = false
 	}
 
+	baseSpeed := p.moveSpeed
+	p.moveSpeed = p.moveSpeed * (1 + p.powerups.MoveSpeedMulti)
 	if GetControls().IsKeyDown(KeyW) {
 		empty := dungeon.grid[int(p.position.y)][int(p.position.x+p.camera.direction.x*p.moveSpeed*DELTA_TIME*debuffV)].isFloor()
 		if empty {
@@ -111,6 +115,7 @@ func (p *Player) Controls(dungeon *Dungeon, deltaTime float64) {
 		}
 	}
 
+	p.moveSpeed = baseSpeed
 	rotation := 0.5
 	increments := rotation / p.attackDuration
 	if GetControls().IsKeyPressed(KeyM1) && !p.isAttacking && p.currentAttackStep <= 0.0 {
@@ -177,6 +182,7 @@ func (p *Player) Attack() {
 	p.currentEnemyNpcTarget.hitHighlightTimeleft = hitHighlightTime
 	damage, crit := damage(p.attributes)
 
+	p.stats.Hp = min(p.stats.Hp+int(float64(damage)*(p.powerups.Lifesteal)), p.stats.MaxHp)
 	if p.currentEnemyNpcTarget.stats.Hp <= damage {
 		p.currentEnemyNpcTarget.stats.Hp = 0
 		p.currentEnemyNpcTarget.alive = false
@@ -232,5 +238,21 @@ func (p *Player) SpendPoints() {
 	if GetControls().IsKeyPressed(Key4) {
 		p.points--
 		p.attributes.Int++
+	}
+}
+
+func (p *Player) PickupItem(props *[]*Prop) {
+	if !GetControls().IsKeyDown(KeyI) {
+		return
+	}
+
+	for idx, prop := range *props {
+		if prop.distance <= enemyAttackDistance {
+			*props = append((*props)[:idx], (*props)[idx+1:]...)
+
+			powerup, modifier := p.powerups.Random()
+			addPowerupPickup(powerup, modifier*100)
+			return
+		}
 	}
 }

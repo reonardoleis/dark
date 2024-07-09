@@ -5,8 +5,8 @@ const (
 	mapHeight                = 60
 	screenWidth              = 640
 	screenHeight             = 360
-	cellScaleX               = 9.0
-	cellScaleY               = 9.0
+	cellScaleX               = 5.0
+	cellScaleY               = 5.0
 	darkenScale              = 9.0
 	maxRoomSize              = 6
 	minRoomSize              = 4
@@ -19,4 +19,5 @@ const (
 	mapDisplaySize           = 30
 	minEnemiesToProgress     = 10
 	hitHighlightTime         = 0.15
+	itemPickupDistance       = 1.0
 )

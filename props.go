@@ -26,6 +26,8 @@ func getPropsDivs(textureId TextureId) (int, int) {
 		return 2, 2
 	case Clothes1:
 		return 1, 1
+	case Barrel:
+		return 2, 2
 	}
 
 	return 0, 0

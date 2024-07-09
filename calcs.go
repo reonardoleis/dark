@@ -37,16 +37,16 @@ func dodgeChance(attributes *Attributes) float64 {
 }
 
 func critMultiplier(attributes *Attributes) float64 {
-	return 1 + float64(attributes.Agi)*0.15
+	return 1 + float64(attributes.Agi)*0.08
 }
 
 func critChance(attributes *Attributes) float64 {
-	chance := (float64(attributes.Agi)) * 0.05
+	chance := (float64(attributes.Agi)) * 0.03
 	return math.Min(chance, 1.0)
 }
 
 func damage(attributes *Attributes) (int, bool) {
-	damage := float64(attributes.Str) * 2.5
+	damage := float64(attributes.Str) * 2
 	critChance := critChance(attributes)
 
 	random := rand.Float64()

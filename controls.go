@@ -37,6 +37,8 @@ const (
 	Key2         = "Digit2"
 	Key3         = "Digit3"
 	Key4         = "Digit4"
+	KeyI         = "KeyI"
+	KeyP         = "KeyP"
 )
 
 func newControls() {

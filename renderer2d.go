@@ -82,11 +82,12 @@ func (r *Renderer2D) RenderNpcsHealthbars(npcs []*NPC, player *Player) {
 			r.canvas.SetFont(nil, fontSize)
 			fontWidth := fontSize * (4. / 3.)
 
-			textWidth := len(string(npc.name)) * int(fontWidth) / 2
+			text := fmt.Sprintf("Lv. %d %s", npc.stats.Level, npc.name)
+			textWidth := len(text) * int(fontWidth) / 2
 			textStartX := screenWidth/2 - textWidth/2
 
 			r.canvas.SetFillStyle(255, 255, 255)
-			r.canvas.FillText(string(npc.name), float64(textStartX), 22.5)
+			r.canvas.FillText(text, float64(textStartX), 22.5)
 
 			return
 		}
@@ -102,7 +103,9 @@ func (r *Renderer2D) RenderCombatLog() {
 	r.canvas.SetFont(nil, fontSize)
 
 	for _, log := range combatLog {
-		textStartX := float64(screenWidth - 270)
+		fontWidth := fontSize * (4. / 3.)
+		textWidth := len(log) * int(fontWidth) / 2
+		textStartX := float64(screenWidth - textWidth - 32.0)
 		r.canvas.FillText(log, textStartX, y)
 		y += 10.0
 	}
@@ -157,6 +160,13 @@ func (r *Renderer2D) RenderInformationPanel(player *Player, dungeon *Dungeon) {
 	attributesText := player.attributes.String()
 	for _, attributeText := range attributesText {
 		r.canvas.FillText(attributeText, 32.0, startY)
+		startY += 10.0
+	}
+
+	startY = 40.0
+	powerupsTexts := player.powerups.String()
+	for _, powerupsText := range powerupsTexts {
+		r.canvas.FillText(powerupsText, endX-200, startY)
 		startY += 10.0
 	}
 
@@ -232,4 +242,11 @@ func (r *Renderer2D) RenderProgressText(player *Player) {
 
 	r.canvas.FillText(fmt.Sprintf("Kill %d more enemies to progress", max(0, minEnemiesToProgress-player.enemiesKilled)), float64(x)-95, float64(y)+7)
 
+}
+
+func (r *Renderer2D) RenderDungeonLevel(dungeon *Dungeon) {
+	r.canvas.SetFillStyle(255, 255, 255)
+	r.canvas.SetFont(nil, 13)
+
+	r.canvas.FillText(fmt.Sprintf("Dungeon level %d", dungeon.level), 32.0, 12.0)
 }

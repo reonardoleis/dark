@@ -422,7 +422,7 @@ func (r *Renderer3D) RenderProps(player *Player, props []*Prop) {
 		texWidth := tex.rgba.Bounds().Dx()
 		texHeight := tex.rgba.Bounds().Dy()
 
-		vMoveScreen := int(float64(texHeight) / transformY)
+		vMoveScreen := int(float64(texHeight)/transformY) * prop.divY
 		if prop.propPosition == PropPositionCeiling {
 			vMoveScreen = -vMoveScreen
 		}

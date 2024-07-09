@@ -58,6 +58,11 @@ const (
 	Sprite1
 	Chains1
 	Clothes1
+	Barrel
+)
+
+var (
+	menuImage *canvas.Image
 )
 
 type Texture struct {
@@ -79,6 +84,7 @@ var (
 		"wall4_0.png", "wall5_0.png", "wall5_1.png", "wall6_0.png", "wall7_0.png", "wall7_1.png", "wall8_0.png", "wall8_1.png",
 		"sprite1.png",
 		"chains1.png", "clothes1.png",
+		"barrel.png",
 	}
 	texturesType = []TextureId{
 		Sword, Bricks1, Snowbricks, Bookshelf, Hexblue, Floorbrick, Dirtmud, Bricks1Window1, Bricks1Window2, Stonefloor1,
@@ -89,6 +95,7 @@ var (
 		Sprite1,
 		Chains1,
 		Clothes1,
+		Barrel,
 	}
 	textures             = make(map[TextureId]*Texture)
 	floorTextures        = []TextureId{}
@@ -131,4 +138,14 @@ func loadTextures(canvas *canvas.Canvas) {
 	roomCeilingTextures = []TextureId{Ground4_0, Ground5_0, Ground6_0}
 	roomWallTextures = []TextureId{Wall4_0, Wall5_0, Wall6_0, Wall8_0}
 	scenarioPropTextures = []TextureId{Clothes1, Chains1}
+
+	path := fmt.Sprintf("%s/%s", texturesPath, "menu.png")
+
+	image, err := canvas.LoadImage(path)
+	if err != nil {
+		panic(err)
+	}
+
+	menuImage = image
+
 }
